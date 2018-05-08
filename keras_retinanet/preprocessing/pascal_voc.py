@@ -28,27 +28,8 @@ except ImportError:
     import xml.etree.ElementTree as ET
 
 voc_classes = {
-    'aeroplane'   : 0,
-    'bicycle'     : 1,
-    'bird'        : 2,
-    'boat'        : 3,
-    'bottle'      : 4,
-    'bus'         : 5,
-    'car'         : 6,
-    'cat'         : 7,
-    'chair'       : 8,
-    'cow'         : 9,
-    'diningtable' : 10,
-    'dog'         : 11,
-    'horse'       : 12,
-    'motorbike'   : 13,
-    'person'      : 14,
-    'pottedplant' : 15,
-    'sheep'       : 16,
-    'sofa'        : 17,
-    'train'       : 18,
-    'tvmonitor'   : 19
-}
+    'sku'   : 0
+    }
 
 
 def _findNode(parent, name, debug_name = None, parse = None):
@@ -113,8 +94,8 @@ class PascalVocGenerator(Generator):
         return read_image_bgr(path)
 
     def __parse_annotation(self, element):
-        truncated = _findNode(element, 'truncated', parse=int)
-        difficult = _findNode(element, 'difficult', parse=int)
+        #truncated = _findNode(element, 'truncated', parse=int)
+        #difficult = _findNode(element, 'difficult', parse=int)
 
         class_name = _findNode(element, 'name').text
         if class_name not in self.classes:
@@ -124,29 +105,26 @@ class PascalVocGenerator(Generator):
         box[0, 4] = self.name_to_label(class_name)
 
         bndbox    = _findNode(element, 'bndbox')
-        box[0, 0] = _findNode(bndbox, 'xmin', 'bndbox.xmin', parse=float) - 1
-        box[0, 1] = _findNode(bndbox, 'ymin', 'bndbox.ymin', parse=float) - 1
-        box[0, 2] = _findNode(bndbox, 'xmax', 'bndbox.xmax', parse=float) - 1
-        box[0, 3] = _findNode(bndbox, 'ymax', 'bndbox.ymax', parse=float) - 1
+        box[0, 0] = int(_findNode(bndbox, 'xmin', 'bndbox.xmin', parse=float))
+        box[0, 1] = int(_findNode(bndbox, 'ymin', 'bndbox.ymin', parse=float))
+        box[0, 2] = int(_findNode(bndbox, 'xmax', 'bndbox.xmax', parse=float))
+        box[0, 3] = int(_findNode(bndbox, 'ymax', 'bndbox.ymax', parse=float))
 
-        return truncated, difficult, box
+        return box
 
     def __parse_annotations(self, xml_root):
-        size_node = _findNode(xml_root, 'size')
-        width     = _findNode(size_node, 'width',  'size.width',  parse=float)
-        height    = _findNode(size_node, 'height', 'size.height', parse=float)
-
+    	
         boxes = np.zeros((0, 5))
         for i, element in enumerate(xml_root.iter('object')):
             try:
-                truncated, difficult, box = self.__parse_annotation(element)
+                box = self.__parse_annotation(element)
             except ValueError as e:
                 raise_from(ValueError('could not parse object #{}: {}'.format(i, e)), None)
 
-            if truncated and self.skip_truncated:
-                continue
-            if difficult and self.skip_difficult:
-                continue
+            #if truncated and self.skip_truncated:
+            #    continue
+            #if difficult and self.skip_difficult:
+            #    continue
             boxes = np.append(boxes, box, axis=0)
 
         return boxes
