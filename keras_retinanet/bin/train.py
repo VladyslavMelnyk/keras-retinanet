@@ -19,6 +19,7 @@ limitations under the License.
 import argparse
 import functools
 import os
+import time
 import sys
 import warnings
 
@@ -427,6 +428,7 @@ def main(args=None):
         args,
     )
 
+    start = time.time()
     # start training
     training_model.fit_generator(
         generator=train_generator,
@@ -435,6 +437,8 @@ def main(args=None):
         verbose=1,
         callbacks=callbacks,
     )
+    print("Training for {} took time: ".format(args.epochs), time.time() - start)
+    print("Average time for epoch: ", (time.time() - start)/args.epochs)
 
 if __name__ == '__main__':
     main()
